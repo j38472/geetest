@@ -3,6 +3,8 @@ package BiLi;
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -35,8 +37,9 @@ public class GeettestCrawler {
     private static String FULL_IMAGE_NAME = "full-image";//完整的图像名称
     private static String BG_IMAGE_NAME = "bg-image";   //背景图像名称
     private static String INDEX_URL = "https://passport.bilibili.com/login";//验证码URL
-    private static int [][] moveArray ;// = new int [52][2];
+    private static int[][] moveArray;// = new int [52][2];
     private static boolean moveArrayInit = false;
+    private static int pieceNummber = 0; //小图片数量
     private static int TestTimes = 1000;//测试次数
     private static int successTimes = 0;//成功次数
     private static WebDriver driver;//selenium 实例声明
@@ -104,12 +107,33 @@ public class GeettestCrawler {
 
     /**
      * 获取move数组
-     * @param driver
+     * 单个图片的坐标
+     *
+     * @param driver 图片模块
      */
-    private static void initMoveArray(WebDriver driver){
-        if (moveArrayInit){
-
+    private static void initMoveArray(WebDriver driver) {
+        if (moveArrayInit) {
+            return;
         }
+        Document document = Jsoup.parse(driver.getPageSource());
+        Elements elements = document.select("[class=gt_cut_bg gt_show]").first().children();//获取底图错位图片元素们
+        int i = 0;
+        pieceNummber = elements.size();
+        moveArray = new int[pieceNummber][2];
+        for (Element element :
+                elements) {
+            Pattern pattern = Pattern.compile(".*background-position: (.*?)px (.*?)px.*");
+            Matcher matcher = pattern.matcher(element.toString());
+            if (matcher.find()) {
+                String width = matcher.group(1);
+                String height = matcher.group(2);
+                moveArray[i][0] = Integer.parseInt(width);
+                moveArray[i++][1]=Integer.parseInt(height);
+            }else {
+                throw new RuntimeException("解析异常");
+            }
+        }
+        moveArrayInit = true;
     }
 
     /**
