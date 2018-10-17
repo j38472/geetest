@@ -5,17 +5,30 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.*;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
+import java.util.Random;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -101,8 +114,76 @@ public class GeettestCrawler {
         FileUtils.copyURLToFile(new URL(fullImageUrl), new File(basePath + FULL_IMAGE_NAME + ".jpg"));
         String getBgImageUrl = getBgimageUrl(pageSource);
         FileUtils.copyURLToFile(new URL(getBgImageUrl), new File(basePath + BG_IMAGE_NAME + ".jpg"));
+        initMoveArray(driver);
 
         return 1;
+    }
+
+    /**
+     * 还原图片
+     *
+     * @param type 类型
+     */
+    private static void restoreImage(String type) {
+        //分割图片 2 * 26
+        for (int i = 0; i < pieceNummber; i++) {
+            cutPic(basePath + type + ".jpg", basePath + "result/" + type + ".jpg", -moveArray[i][0], -moveArray[i][1], 10, 58);
+
+        }
+
+
+    }
+
+    /**
+     * 分割图片
+     * @param srcFile 图片路径\\名称.jpg
+     * @param outFile 图片输出路径//名称.jpg
+     * @param x       图片坐标x
+     * @param y       图片坐标y
+     * @param width   图宽
+     * @param height  图高
+     * @return 是否成功
+     */
+    public static boolean cutPic(String srcFile, String outFile, int x, int y, int width, int height) {
+        FileInputStream fis = null;
+        ImageInputStream iis = null;
+        if (!new File(srcFile).exists()) {
+            return false;
+        }
+        try {
+            fis = new FileInputStream(srcFile);
+            String ext = srcFile.substring(srcFile.lastIndexOf(".") + 1);
+            Iterator<ImageReader> it = ImageIO.getImageReadersByFormatName(ext);
+            ImageReader reader = it.next();
+            iis = ImageIO.createImageInputStream(fis);
+            reader.setInput(iis, true);
+            ImageReadParam param = reader.getDefaultReadParam();
+            Rectangle rect = new Rectangle(x, y, width, height);
+            param.setSourceRegion(rect);
+            BufferedImage bi = reader.read(0, param);
+            File tempOutFile = new File(outFile);
+            if (!tempOutFile.exists()) {
+                tempOutFile.mkdirs();
+            }
+            ImageIO.write(bi, ext, new File(outFile));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return false;
+        } finally {
+            try {
+                if (fis != null) {
+                    fis.close();
+                }
+                if (iis != null) {
+                    iis.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
     }
 
     /**
@@ -128,8 +209,8 @@ public class GeettestCrawler {
                 String width = matcher.group(1);
                 String height = matcher.group(2);
                 moveArray[i][0] = Integer.parseInt(width);
-                moveArray[i++][1]=Integer.parseInt(height);
-            }else {
+                moveArray[i++][1] = Integer.parseInt(height);
+            } else {
                 throw new RuntimeException("解析异常");
             }
         }
