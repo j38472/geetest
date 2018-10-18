@@ -121,11 +121,26 @@ public class GeettestCrawler {
         //分割图片 2 * 26
         for (int i = 0; i < pieceNummber; i++) {
             cutPic(basePath + type + ".jpg", basePath + "result/" + type + ".jpg", -moveArray[i][0], -moveArray[i][1], 10, 58);
-
         }
         //拼接图片
         String[] b = new String[(int) pieceNummber / 2];
-
+        for (int i = 0; i < (int) pieceNummber / 2; i++) {
+            b[i] = String.format(basePath + "result/" + type + "%d.jpg", i);
+        }
+        mergeImage(b, 1, basePath + "result/" + type + "result1.jpg");
+        String[] c = new String[(int) pieceNummber / 2];
+        for (int i = 0; i < (int) pieceNummber; i++) {
+            c[i] = String.format(basePath + "result/" + type + "%d.jpg", i + (int) pieceNummber / 2);
+        }
+        mergeImage(c, 1, basePath + "result/" + type + "result2.jpg");
+        mergeImage(new String[]{basePath + "result/" + type + "result1.jpg",
+                basePath + "result/" + type + "result2.jpg"}, 2, basePath + "result//" + type + "result3.jpg");
+        //删除产生的中间图片
+        for (int i = 0; i < pieceNummber; i++) {
+            new File(basePath+"result/"+type+i+".jpg").deleteOnExit();
+        }
+        new File(basePath+"result/"+type+"result1.jpg").deleteOnExit();
+        new File(basePath+"result/"+type+"result2.jpg").deleteOnExit();
 
     }
 
@@ -157,38 +172,38 @@ public class GeettestCrawler {
         int newWidth = 0;
         for (int i = 0; i < images.length; i++) {
             //横向
-            if (type==1){
-                newHeigth = newHeigth>images[i].getHeight()?newHeigth:images[i].getHeight();
+            if (type == 1) {
+                newHeigth = newHeigth > images[i].getHeight() ? newHeigth : images[i].getHeight();
                 newWidth += images[i].getWidth();
-            }else if(type == 2){
+            } else if (type == 2) {
                 //纵向
-                newWidth = newWidth > images[i].getWidth()?newWidth:images[i].getWidth();
+                newWidth = newWidth > images[i].getWidth() ? newWidth : images[i].getWidth();
                 newHeigth += images[i].getHeight();
             }
         }
-        if (type == 1 && newWidth < 1){
+        if (type == 1 && newWidth < 1) {
             return;
         }
-        if (type == 2 && newHeigth <1){
+        if (type == 2 && newHeigth < 1) {
             return;
         }
         //生成新图片
         try {
 
-            BufferedImage ImageNew = new BufferedImage(newWidth,newHeigth,BufferedImage.TYPE_INT_RGB);
+            BufferedImage ImageNew = new BufferedImage(newWidth, newHeigth, BufferedImage.TYPE_INT_RGB);
             int height_i = 0;
-            int width_i =0;
-            for (int i =0 ; i<images.length;i++){
-                if (type == 1){
-                    ImageNew.setRGB(width_i,0,images[i].getWidth(),newHeigth,ImageArrays[i],0,newWidth);
+            int width_i = 0;
+            for (int i = 0; i < images.length; i++) {
+                if (type == 1) {
+                    ImageNew.setRGB(width_i, 0, images[i].getWidth(), newHeigth, ImageArrays[i], 0, newWidth);
                     height_i += images[i].getHeight();
                 }
             }
             //输出新图片
             ImageIO.write(ImageNew, targetFile.split("\\.")[1], new File(targetFile));
-        }catch (Exception e){
+        } catch (Exception e) {
             System.err.println("生成新图片失败");
-            throw  new RuntimeException(e);
+            throw new RuntimeException(e);
         }
 
 
