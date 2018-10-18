@@ -32,13 +32,12 @@ import java.util.regex.Pattern;
  * bilibili极验验证码
  *
  * @author cyh
- * 参考项目： https://blog.csdn.net/qq_28379809/article/details/81210761
  * selenium模拟验证过程
  * 1.加载页面
  * 2.获取图片
  * 3.拼凑出图片
  * 4.计算需要平移的距离
- * 5.平移过去（尽可能模拟人的先快后慢的轨迹习惯）--------!----!--!-!-
+ * 5.平移过去（尽可能模拟人的先快后慢的轨迹习惯）
  */
 public class GeettestCrawler {
     private static String basePath = "src/main/resources/";
