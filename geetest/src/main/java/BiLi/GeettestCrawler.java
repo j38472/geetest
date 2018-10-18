@@ -5,10 +5,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.SourceType;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -23,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,6 +69,8 @@ public class GeettestCrawler {
                 invoke();
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             System.out.println("当前在测第" + i + 1 + "次,已成功" + successTimes + "次,成功率:" + ((double) successTimes / (double) i + 1) * 100 + "%");
 
@@ -76,7 +82,7 @@ public class GeettestCrawler {
     /**
      * 逻辑调用层
      */
-    public static void invoke() throws IOException {
+    public static void invoke() throws IOException, InterruptedException {
         driver.get(INDEX_URL);
 
         By moveBet = By.cssSelector(".gt_slider_knob.gt_show");//滑动验证码滑动按钮
@@ -85,13 +91,55 @@ public class GeettestCrawler {
         int i = 0;
         while (i++ < 15) {
             int distance = getMoveDistance(driver);
+            move(driver,moveElemet,distance - 6);
+            By gtTypeBy = By.cssSelector(".gt_info_type");
+            By gtInfoBy = By.cssSelector(".gt_info_content");
+            waitForLoad(driver,gtTypeBy);
+            String gtType = driver.findElement(gtTypeBy).getText();
+            waitForLoad(driver,gtInfoBy);
+            String gtInfo = driver.findElement(gtInfoBy).getText();
+            System.out.println(gtType +"---"+gtInfo);
+            if (gtType.contains("验证通过")){
+                successTimes++;
+            }
+            /**
+             * 失败
+             */
+            if (!gtType.equals("再来一次:")&&!gtType.equals("验证失败:")){
+                Thread.sleep(4000);
+                System.out.println(driver);
+                break;
+            }
+            Thread.sleep(4000);
         }
     }
 
+    private static void printLocation(WebElement element) {
+        Point point = element.getLocation();
+        System.out.println("final:"+point.toString());//(632,360)
+    }
+
     /**
-     * 模拟鼠标移动轨迹
+     * 移动
+     *
+     * @param driver   模拟器
+     * @param element  模块
+     * @param distance 距离
+     * @throws InterruptedException 睡眠异常捕获
      */
-    public void move() {
+    public static void move(WebDriver driver, WebElement element, int distance) throws InterruptedException {
+        int xDis = distance;
+        int moveX = new Random().nextInt(10) - 5;
+        int moveY = 1;
+        Actions actions = new Actions(driver);
+        new Actions(driver).clickAndHold(element).perform();
+        //两次移动
+        Thread.sleep(2000);
+        actions.moveByOffset((xDis + moveX) / 2, moveY).perform();
+        Thread.sleep((int) (Math.random() * 2000));
+        actions.moveByOffset((xDis + moveX) / 2, moveY).perform();
+        Thread.sleep(500);
+        actions.release(element).perform();
 
     }
 
@@ -108,8 +156,37 @@ public class GeettestCrawler {
         String getBgImageUrl = getBgimageUrl(pageSource);
         FileUtils.copyURLToFile(new URL(getBgImageUrl), new File(basePath + BG_IMAGE_NAME + ".jpg"));
         initMoveArray(driver);
+        restoreImage(FULL_IMAGE_NAME);
+        restoreImage(BG_IMAGE_NAME);
 
-        return 1;
+        BufferedImage fullBI = ImageIO.read(new File(basePath + "result/" + FULL_IMAGE_NAME + "result3.jpg"));
+        BufferedImage bgBI = ImageIO.read(new File(basePath + "result/" + BG_IMAGE_NAME + "result3.jpg"));
+        for (int i = 0; i < bgBI.getWidth(); i++) {
+            for (int j = 0; j < bgBI.getHeight(); j++) {
+                int[] fullRgb = new int[3];
+                fullRgb[0] = (fullBI.getRGB(i, j) & 0xff0000) >> 16;
+                fullRgb[1] = (fullBI.getRGB(i, j) & 0xff00) >> 8;
+                fullRgb[2] = (fullBI.getRGB(i, j) & 0xff);
+
+                int[] bgRgb = new int[3];
+                bgRgb[0] = (bgBI.getRGB(i, j) & 0xff0000) >> 16;
+                bgRgb[1] = (bgBI.getRGB(i, j) & 0xff00) >> 8;
+                bgRgb[2] = (bgBI.getRGB(i, j) & 0xff);
+                if (difference(fullRgb, bgRgb) > 255) {
+                    return i;
+                }
+            }
+        }
+        throw new RuntimeException("未找到需要平移的位置");
+    }
+
+    /**
+     * @param a 图a像素点
+     * @param b 图b像素点
+     * @return 灰度值的绝对值
+     */
+    private static int difference(int[] a, int[] b) {
+        return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
     }
 
     /**
@@ -137,10 +214,10 @@ public class GeettestCrawler {
                 basePath + "result/" + type + "result2.jpg"}, 2, basePath + "result//" + type + "result3.jpg");
         //删除产生的中间图片
         for (int i = 0; i < pieceNummber; i++) {
-            new File(basePath+"result/"+type+i+".jpg").deleteOnExit();
+            new File(basePath + "result/" + type + i + ".jpg").deleteOnExit();
         }
-        new File(basePath+"result/"+type+"result1.jpg").deleteOnExit();
-        new File(basePath+"result/"+type+"result2.jpg").deleteOnExit();
+        new File(basePath + "result/" + type + "result1.jpg").deleteOnExit();
+        new File(basePath + "result/" + type + "result2.jpg").deleteOnExit();
 
     }
 
