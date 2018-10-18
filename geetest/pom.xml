@@ -55,6 +55,11 @@
             <artifactId>htmlunit</artifactId>
             <version>2.27</version>
         </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-api</artifactId>
+            <version>3.13.0</version>
+        </dependency>
     </dependencies>
 
 
