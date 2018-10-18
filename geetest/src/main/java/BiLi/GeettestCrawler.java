@@ -42,12 +42,12 @@ import java.util.regex.Pattern;
  */
 public class GeettestCrawler {
     private static String basePath = "src/main/resources/";
-    private static String FULL_IMAGE_NAME = "full-image";
-    private static String BG_IMAGE_NAME = "bg-image";
+    private static final String FULL_IMAGE_NAME = "full-image";
+    private static final String BG_IMAGE_NAME = "bg-image";
     private static int[][] moveArray;// = new int[52][2];
     private static boolean moveArrayInit = false;
     private static int pieceNumber = 0; // 小图片数量
-    private static String INDEX_URL = "https://passport.bilibili.com/login";//测试B站登录验证码
+    private static final String INDEX_URL = "https://passport.bilibili.com/login";//测试B站登录验证码
     private static WebDriver driver;
     private static int testTimes = 10; // 测试100次，成功率在80%左右
     private static int successTimes = 0;
@@ -76,7 +76,9 @@ public class GeettestCrawler {
         driver.quit();
     }
 
-
+    /**
+     * 逻辑过程
+     */
     private static void invoke() throws IOException, InterruptedException, StaleElementReferenceException {
         //设置input参数
         driver.get(INDEX_URL);
@@ -149,8 +151,7 @@ public class GeettestCrawler {
     /**
      * 等待元素加载，10s超时
      *
-     * @param driver
-     * @param by
+     * @param driver 模块
      */
     public static void waitForLoad(final WebDriver driver, final By by) {
         new WebDriverWait(driver, 10).until(new
@@ -168,9 +169,9 @@ public class GeettestCrawler {
     /**
      * 计算需要平移的距离
      *
-     * @param driver
-     * @return
-     * @throws IOException
+     * @param driver 模块
+     * @return 距离
+     * @throws IOException io异常
      */
     public static int getMoveDistance(WebDriver driver) throws IOException {
         String pageSource = driver.getPageSource(); // pageSource即网页源代码
@@ -209,7 +210,7 @@ public class GeettestCrawler {
     /**
      * 获取move数组
      *
-     * @param driver
+     * @param driver 模块
      */
     private static void initMoveArray(WebDriver driver) {
         if (moveArrayInit) {
@@ -240,8 +241,8 @@ public class GeettestCrawler {
     /**
      * 获取原始图url
      *
-     * @param pageSource
-     * @return
+     * @param pageSource 源码
+     * @return ｕｒｌ
      */
     private static String getFullImageUrl(String pageSource) {
         String url = null;
@@ -260,8 +261,8 @@ public class GeettestCrawler {
     /**
      * 获取带背景的url
      *
-     * @param pageSource
-     * @return
+     * @param pageSource　源码
+     * @return  URL
      */
     private static String getBgImageUrl(String pageSource) {
         String url = null;
@@ -277,6 +278,16 @@ public class GeettestCrawler {
         return url;
     }
 
+    /**
+     * 图片剪裁
+     * @param srcFile 图片地址
+     * @param outFile 输出地址
+     * @param x x轴
+     * @param y y轴
+     * @param width 图片宽
+     * @param height 图片高
+     * @return
+     */
     public static boolean cutPic(String srcFile, String outFile, int x, int y,
                                  int width, int height) {
         FileInputStream is = null;
@@ -322,7 +333,7 @@ public class GeettestCrawler {
     /**
      * 还原图片
      *
-     * @param type
+     * @param type 文件夹名
      */
     private static void restoreImage(String type) throws IOException {
         //把图片裁剪为2 * 26份
